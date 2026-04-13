@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>♻️ Эко-Бот | Раздельный сбор мусора</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* Контейнер чата */
+        .chat-container {
+            width: 100%;
+            max-width: 600px;
+            height: 85vh;
+            background: white;
+            border-radius: 32px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        /* Шапка */
+        .chat-header {
+            background: #2e7d32;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-bottom: 3px solid #1b5e20;
+        }
+
+        .chat-header h1 {
+            font-size: 1.6rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .chat-header p {
+            font-size: 0.85rem;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+
+        /* Окно сообщений */
+        .messages-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background: #fafafa;
+        }
+
+        /* Стили сообщений */
+        .message {
+            max-width: 85%;
+            padding: 12px 16px;
+            border-radius: 20px;
+            animation: fadeIn 0.3s ease;
+            word-wrap: break-word;
+            line-height: 1.4;
+        }
+
+        .bot-message {
+            background: #e0e0e0;
+            color: #1e1e1e;
+            align-self: flex-start;
+            border-bottom-left-radius: 5px;
+        }
+
+        .user-message {
+            background: #2e7d32;
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 5px;
+        }
+
+        /* Кнопки быстрых ответов */
+        .quick-actions {
+            padding: 12px 16px;
+            background: white;
+            border-top: 1px solid #ddd;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .quick-btn {
+            background: #e8f5e9;
+            border: 1px solid #2e7d32;
+            color: #2e7d32;
+            padding: 8px 16px;
+            border-radius: 40px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .quick-btn:hover {
+            background: #2e7d32;
+            color: white;
+            transform: scale(1.02);
+        }
+
+        /* Поле ввода */
+        .input-area {
+            display: flex;
+            padding: 15px;
+            background: white;
+            border-top: 1px solid #eee;
+            gap: 10px;
+        }
+
+        #userInput {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #c8e6c9;
+            border-radius: 30px;
+            font-size: 1rem;
+            outline: none;
+            transition: 0.2s;
+        }
+
+        #userInput:focus {
+            border-color: #2e7d32;
+        }
+
+        #sendBtn {
+            background: #2e7d32;
+            border: none;
+            color: white;
+            width: 48px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 1.4rem;
+            transition: 0.2s;
+        }
+
+        #sendBtn:hover {
+            background: #1b5e20;
+            transform: scale(1.02);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Ссылки */
+        .eco-link {
+            color: #1b5e20;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .badge {
+            background: #ffb74d;
+            color: #3e2723;
+            border-radius: 12px;
+            padding: 2px 8px;
+            font-size: 0.7rem;
+            display: inline-block;
+            margin-right: 6px;
+        }
+
+        footer {
+            text-align: center;
+            font-size: 0.7rem;
+            padding: 8px;
+            background: #f1f8e9;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+
+<div class="chat-container">
+    <div class="chat-header">
+        <h1>
+            <span>♻️</span> RecycleGuide
+        </h1>
+        <p>Спроси, куда выбросить батарейку, бутылку или стакан</p>
+    </div>
+
+    <div class="messages-area" id="messagesArea">
+        <div class="message bot-message">
+            🌱 Привет! Я помогу тебе сортировать отходы.<br>
+            Напиши <b>предмет</b> (например: «батарейка», «пластик», «крышка», «лампа») или выбери быстрый вопрос.
+        </div>
+    </div>
+
+    <div class="quick-actions">
+        <div class="quick-btn" data-query="батарейка">🔋 Батарейка</div>
+        <div class="quick-btn" data-query="пластиковая бутылка">🥤 Пластик</div>
+        <div class="quick-btn" data-query="стеклянная банка">🥃 Стекло</div>
+        <div class="quick-btn" data-query="градусник">🌡 Опасное</div>
+        <div class="quick-btn" data-query="где сдать">📍 Пункты приема</div>
+    </div>
+
+    <div class="input-area">
+        <input type="text" id="userInput" placeholder="Напиши, что хочешь выбросить...">
+        <button id="sendBtn">➤</button>
+    </div>
+    <footer>
+        ♻️ Советы для России • Разделяй правильно
+    </footer>
+</div>
+
+<script>
+    // ======================== БАЗА ЗНАНИЙ ЭКО-БОТА ========================
+    const ecoKnowledge = {
+        // Ключевые слова и ответы (регистр не важен)
+        "батарейк": "⚠️ <b>Батарейки и аккумуляторы</b> — ОПАСНЫЕ отходы!<br>❌ Не выбрасывай в мусорное ведро.<br>✅ Сдавай в специальные боксы: <br>• Магазины электроники (М.Видео, Эльдорадо)<br>• Гипермаркеты (Лента, Ашан)<br>• Эко-пункты на карте: <a href='https://recyclemap.ru/' target='_blank' class='eco-link'>recyclemap.ru</a>",
+        
+        "пластик": "🥤 <b>Пластик</b> — смотри маркировку в треугольнике:<br>♻️ 1 (ПЭТ), 2 (ПНД), 5 (ПП) — в переработку!<br>🚫 3, 4, 6, 7 — только в общий мусор.<br>💡 Бутылки лучше смять и снять крышку.",
+        
+        "бутылк": "🍾 <b>Пластиковая/стеклянная бутылка</b><br>• Чистая и сухая → в синий контейнер / фандомат.<br>• Крышку открути (крышки собирают отдельно на благотворительность).",
+        
+        "стекл": "🥃 <b>Стекло</b>: банки, бутылки — в зелёный бак (целые).<br>⚠️ Битое стекло — заверни в газету и в общий мусор (чтобы не поранить переработчиков).",
+        
+        "крышк": "💚 <b>Крышечки</b> (пластиковые) можно сдать в проект «Добрые крышечки». Средства идут на благотворительность. Ищи боксы в школах и магазинах.",
+        
+        "лампа": "💡 <b>Люминесцентные и энергосберегающие лампы</b> содержат ртуть!<br>📍 Сдавай в ДЕЗ, управляющую компанию или эко-центры. Ни в коем случае не в мусоропровод!",
+        
+        "градусник": "🌡 <b>Ртутный градусник</b> — ЧП! Не выкидывай!<br>🚨 Вызови МЧС или спецслужбу. Стекло и ртуть — опасные отходы.",
+        
+        "коробк": "📦 <b>Картон и макулатура</b>: коробки, газеты, офисная бумага. Сухие и чистые — в синий бак. Жирную/грязную — только в общий.",
+        
+        "тетрапак": "🥛 <b>Тетрапак</b> (пакеты от молока/сока): пригоден для переработки в некоторых городах. Уточняй на recyclemap.ru. Промой и сплющи.",
+        
+        "одежд": "👕 <b>Текстиль</b>: чистую одежду, обувь — в спецконтейнеры (H&M, фонды). Грязную, рваную — в мусор.",
+        
+        "органик": "🍌 <b>Пищевые отходы</b>: очистки, остатки еды — в серое ведро. Идеально — компостировать. Не клади в пластик!",
+        
+        "где сдать": "📍 <b>Где найти пункты приема?</b><br>🗺 Интерактивная карта: <a href='https://recyclemap.ru/' target='_blank'>recyclemap.ru</a><br>📱 Приложение «Уберу» / «Экосборка»<br>🏪 Акции в магазинах: ВкусВилл, Перекрёсток (уточняй даты).",
+        
+        "эко": "🌍 Маленькие шаги: <br>✔️ Многоразовая сумка вместо пакета<br>✔️ Бутылка воды с собой<br>✔️ Сдавай батарейки раз в месяц.<br>Вместе мы спасём планету!"
+    };
+
+    // Функция поиска ответа по вводу пользователя
+    function getBotAnswer(userText) {
+        let lowerText = userText.toLowerCase();
+        
+        // Прямые совпадения по ключам
+        for (let [key, answer] of Object.entries(ecoKnowledge)) {
+            if (lowerText.includes(key)) {
+                return answer;
+            }
+        }
+        
+        // Дополнительные фразы
+        if (lowerText.includes("пенопласт") || lowerText.includes("плёнк")) {
+            return "❌ Пенопласт и пластиковая плёнка (стрейч) в большинстве городов НЕ ПЕРЕРАБАТЫВАЮТСЯ. Выбрасывай в общий мусор.";
+        }
+        if (lowerText.includes("чек") || lowerText.includes("термобумаг")) {
+            return "🧾 Чеки на термобумаге НЕ перерабатываются (содержат бисфенол). Кидай в общий мусор.";
+        }
+        if (lowerText.includes("зубн") || lowerText.includes("щетк")) {
+            return "🪥 Старую зубную щётку и тюбик от пасты — в общий мусор. Спецбоксы для переработки есть только в эко-центрах.";
+        }
+        
+        // Ответ по умолчанию
+        return "🤔 Я пока не знаю этот предмет. Попробуй написать: \n«батарейка», «пластик», «стекло», «градусник», «лампа», «где сдать». \n♻️ Или загляни на recyclemap.ru";
+    }
+
+    // ======================== РАБОТА С ИНТЕРФЕЙСОМ ========================
+    const messagesArea = document.getElementById('messagesArea');
+    const userInput = document.getElementById('userInput');
+    const sendBtn = document.getElementById('sendBtn');
+
+    // Добавление сообщения в чат
+    function addMessage(text, isUser = false) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
+        if (!isUser) {
+            // Поддержка HTML для бота (ссылки, жирный)
+            messageDiv.innerHTML = text;
+        } else {
+            messageDiv.innerText = text;
+        }
+        messagesArea.appendChild(messageDiv);
+        // Автоскролл вниз
+        messagesArea.scrollTop = messagesArea.scrollHeight;
+    }
+
+    // Обработка отправки сообщения
+    function handleSend() {
+        let query = userInput.value.trim();
+        if (query === "") return;
+        
+        // Показываем вопрос пользователя
+        addMessage(query, true);
+        
+        // Получаем ответ бота
+        let answer = getBotAnswer(query);
+        
+        // Небольшая задержка для естественности
+        setTimeout(() => {
+            addMessage(answer, false);
+        }, 300);
+        
+        // Очищаем поле ввода
+        userInput.value = "";
+    }
+
+    // Кнопка отправки
+    sendBtn.addEventListener('click', handleSend);
+    
+    // Отправка по Enter
+    userInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            handleSend();
+        }
+    });
+
+    // Обработка быстрых кнопок
+    const quickBtns = document.querySelectorAll('.quick-btn');
+    quickBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const queryText = btn.getAttribute('data-query');
+            userInput.value = queryText;
+            handleSend();
+        });
+    });
+</script>
+</body>
+</html>
